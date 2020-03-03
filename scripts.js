@@ -78,13 +78,15 @@ function init() {
   player = new mm.SoundFontPlayer('https://storage.googleapis.com/magentadata/js/soundfonts/sgm_plus');
 
   // Initialize mvae
-  mvae = new mm.MusicVAE('https://storage.googleapis.com/magentadata/js/checkpoints/music_vae/mel_2bar_small');
+  mvae = new mm.MusicVAE('https://storage.googleapis.com/magentadata/js/checkpoints/music_vae/trio_4bar');
   mvae.initialize();
 
   player.callbackObject = {
     run: (note) => viz.redraw(note, true),
     stop: () => { }
   };
+
+  setLoading(false);
 }
 
 function updateViz() {
@@ -111,6 +113,7 @@ async function loadSequence(mel) {
       const melChunks = mm.sequences.split(mm.sequences.clone(m), 16 * TRIO_BARS);
       chunks = chunks.concat(melChunks);
     });
+    console.log(chunks);
     return chunks;
   }
 }
@@ -122,17 +125,19 @@ function playCurrentMel() {
 }
 
 async function loadTwinkle() {
-  const newMel = mm.sequences.quantizeNoteSequence(TWINKLE_TWINKLE, 4);
+  setLoading(true);
+  const newMel = mm.sequences.quantizeNoteSequence(TWINKLE_TWINKLE, 2);
 
   await loadSequence(newMel);
   console.log(newMel);
 
   updateViz();
+  setLoading(false);
 }
 
 // Train the model!!
 async function train() {
-  // updateUI('training');
+  setLoading(true);
   // stopPlayer(playerMelody, document.getElementById('btnPlayMelody'));
 
   currentSample = null;
@@ -150,6 +155,8 @@ async function train() {
   });
   // updateUI('training-done');
   await loadTrained();
+
+  setLoading(false);
 }
 
 async function loadTrained() {
@@ -167,59 +174,12 @@ async function loadTrained() {
   s.dispose();
 }
 
-// // Train the model!!
-// async function train() {
-//     // setLoading(true);
-//     console.log("training");
-//     console.log(midime);
-//     // stopPlayer();
 
-//     // This is the input that we're going to train on.
-//     const chunks = getChunks([currentMel]);
-//     console.log(chunks)
-//     const z1 = await midime.encode(chunks);  // shape of z is [chunks, 256]
+function setLoading(loading) {
+  if (loading) {
+    document.getElementById("loading").removeAttribute('hidden');
+  } else {
+    document.getElementById("loading").setAttribute('hidden', true);
+  }
+}
 
-//     training.z = z1;
-
-//     console.log(training.z)
-
-//     var totalSteps = midime.config.epochs = trainingSteps;
-
-//     const losses = [];
-
-//     // console.log(training.z)
-
-//     await midime.train(training.z, async (epoch, logs) => {
-//       // await mm.tf.nextFrame();
-//       trainingSteps = epoch + 1;
-//       losses.push(logs.total);
-//       // plotLoss(losses);
-//     });
-//     console.log("training done")
-
-//     // If we've trained, then we sample from MidiMe.
-//     const s = await midime.sample(1);
-//     training.zArray = s.arraySync()[0];
-//     var mel = (await midime.decode(s))[0];
-
-//     console.log("got new sequence")
-
-//     // Get the 4 inputs from midime too.
-//     const z = midime.encoder.predict(s);
-//     const z_ = z[0].arraySync()[0];
-//     s.dispose();
-
-//     currentMel = mel;
-
-//     function getChunks(qnsMel) {
-//       // Encode the input into MusicVAE, get back a z.
-//       // Split this sequence into 32 bar chunks.
-//       let chunks = [];
-//       qnsMel.forEach((m) => {
-//         const melChunks = mm.sequences.split(mm.sequences.clone(m), 16 * 4);
-//         chunks = chunks.concat(melChunks);
-//       });
-//       return chunks;
-//     }
-
-//   }
