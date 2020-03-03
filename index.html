@@ -21,12 +21,24 @@
     <div id="center">
         <div class="box">
             <button onclick="playCurrentMel()">playCurrentMel</button>
+            <button onclick="loopPlayer()">loopPlayer</button>
+            <button onclick="stopPlayer()">stopPlayer</button>
+
+        </div>
+        <div class="box">
             <button onclick="loadTwinkle()">loadTwinkle</button>
             
             <button onclick="train()">train</button>
             
             <button onclick="loadTrained()">loadTrained</button>
     
+        </div>
+
+        <div class="box">
+            <label class="button" id="fileBtn">
+                load a midi file
+                <input type="file" accept=".midi, .mid" id="fileInput">
+              </label>
         </div>
         <svg id="viz">
         </svg>

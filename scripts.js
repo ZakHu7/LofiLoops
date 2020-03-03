@@ -59,6 +59,8 @@ const TWINKLE_TWINKLE = {
 let currentMel;
 let training = {};
 let trainingSteps = 100;
+let userStopped = true;
+
 
 let mvae;
 let midime;
@@ -78,13 +80,19 @@ function init() {
   player = new mm.SoundFontPlayer('https://storage.googleapis.com/magentadata/js/soundfonts/sgm_plus');
 
   // Initialize mvae
-  mvae = new mm.MusicVAE('https://storage.googleapis.com/magentadata/js/checkpoints/music_vae/trio_4bar');
+  // mvae = new mm.MusicVAE('https://storage.googleapis.com/magentadata/js/checkpoints/music_vae/trio_4bar');
+  
+  mvae = new mm.MusicVAE('https://storage.googleapis.com/magentadata/js/checkpoints/music_vae/trio_16bar');
   mvae.initialize();
 
   player.callbackObject = {
     run: (note) => viz.redraw(note, true),
     stop: () => { }
   };
+
+  // Event Listeners
+  fileBtn.addEventListener('change', loadFile);
+
 
   setLoading(false);
 }
@@ -94,6 +102,28 @@ function updateViz() {
     currentMel,
     document.getElementById('viz'),
     { noteRGB: '35,70,90', activeNoteRGB: '157, 229, 184', noteHeight: 3 });
+}
+
+function stopPlayer() {
+  player.stop();
+  userStopped = true;
+}
+
+function playCurrentMel() {
+  player.resumeContext();
+  userStopped = false;
+  player.start(currentMel);
+}
+
+function loopPlayer() {
+  userStopped = false;
+  player.start(currentMel).then(() => {
+    if (!userStopped) {
+      loopPlayer();
+    } else {
+      stopPlayer();
+    }
+  });
 }
 
 async function loadSequence(mel) {
@@ -118,21 +148,45 @@ async function loadSequence(mel) {
   }
 }
 
-function playCurrentMel() {
-  player.resumeContext();
-
-  player.start(currentMel);
-}
-
 async function loadTwinkle() {
   setLoading(true);
-  const newMel = mm.sequences.quantizeNoteSequence(TWINKLE_TWINKLE, 2);
 
-  await loadSequence(newMel);
-  console.log(newMel);
+  const qns = mm.sequences.quantizeNoteSequence(TWINKLE_TWINKLE, 4);
+  await loadSequence(qns);
+  console.log(qns);
 
   updateViz();
   setLoading(false);
+}
+// Loads a file from the user.
+async function loadFile() {
+  if (fileInput.files.length == 0) {
+    console.log("No files provided!");
+    return;
+  }
+  setLoading(true);
+
+  const uns = await mm.blobToNoteSequence(fileInput.files[0]);
+  const qns = mm.sequences.quantizeNoteSequence(uns, 4);
+  await loadSequence(qns);
+  console.log(qns);
+
+  updateViz();
+  setLoading(false);
+}
+
+async function loadTrained() {
+
+  const s = await midime.sample(1);
+  let zArray = s.arraySync()[0];
+  const newMel = (await mvae.decode(s))[0];
+  await loadSequence(newMel);
+
+  // Get the 4 inputs from midime too.
+  const z = midime.encoder.predict(s);
+  const z_ = z[0].arraySync()[0];
+  console.log(z_);
+  s.dispose();
 }
 
 // Train the model!!
@@ -159,20 +213,7 @@ async function train() {
   setLoading(false);
 }
 
-async function loadTrained() {
 
-  const s = await midime.sample(1);
-  let zArray = s.arraySync()[0];
-  const newMel = (await mvae.decode(s))[0];
-  await loadSequence(newMel);
-  debugger;
-
-  // Get the 4 inputs from midime too.
-  const z = midime.encoder.predict(s);
-  const z_ = z[0].arraySync()[0];
-  console.log(z_);
-  s.dispose();
-}
 
 
 function setLoading(loading) {

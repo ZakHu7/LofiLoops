@@ -15,6 +15,41 @@
     background-color: #464D76;
 }
 
+.box {
+    margin: 5px;
+    padding: 10px;
+    border-radius: 2px;
+    border-color: black;
+    background-color: ghostwhite;
+}
+
+input[type="file"] {
+    width: 0;
+    height: 0;
+    opacity: 0;
+    cursor: pointer;
+    display: none;
+}
+
+.button {
+    display: inline-block;
+    font-family: inherit;
+    font-weight: normal;
+    transition: all 0.2s linear;
+    text-align: center;
+    padding: 8px;
+    margin: 0;
+    border: none;
+    text-shadow: none;
+    border-radius: 3px;
+    cursor: pointer;
+    
+    font-size: 16px;
+    vertical-align: middle;
+    background: #466576;
+    color: black;
+}
+/* Loading */
 #loading {
     z-index: 999;
 }
