@@ -176,17 +176,34 @@ async function loadFile() {
 }
 
 async function loadTrained() {
+  const z1 = document.getElementById("z1").value;
+  const z2 = document.getElementById("z2").value;
+  const z3 = document.getElementById("z3").value;
+  const z4 = document.getElementById("z4").value;
 
-  const s = await midime.sample(1);
-  let zArray = s.arraySync()[0];
-  const newMel = (await mvae.decode(s))[0];
-  await loadSequence(newMel);
+  debugger;
 
-  // Get the 4 inputs from midime too.
-  const z = midime.encoder.predict(s);
-  const z_ = z[0].arraySync()[0];
-  console.log(z_);
-  s.dispose();
+  if (z1 && z2 && z3) {
+      let z = [z1,z2,z3,z4];
+
+      const sample = await midime.decode(mm.tf.tensor(z, [1,4]));
+      const newMel = (await mvae.decode(sample))[0];
+
+      await loadSequence(newMel);
+      
+      z = sample.arraySync()[0];
+  } else {
+    const s = await midime.sample(1);
+    let zArray = s.arraySync()[0];
+    const newMel = (await mvae.decode(s))[0];
+    await loadSequence(newMel);
+  
+    // Get the 4 inputs from midime too.
+    const z = midime.encoder.predict(s);
+    const z_ = z[0].arraySync()[0];
+    console.log(z_);
+    s.dispose();
+  }
 }
 
 // Train the model!!
